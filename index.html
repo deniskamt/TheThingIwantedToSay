@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Один вопрос</title>
+<style>
+  :root{
+    --pink:#ff5fa2;
+    --pink-soft:#ffd7e7;
+    --pink-deep:#d63384;
+    --white:#fffafc;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{
+    font-family:"Comic Sans MS","Trebuchet MS",-apple-system,system-ui,sans-serif;
+    background:
+      radial-gradient(circle at 20% 15%, #ffe6f0 0%, transparent 55%),
+      radial-gradient(circle at 80% 85%, #ffdcec 0%, transparent 55%),
+      var(--white);
+    color:var(--pink-deep);
+    overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    text-align:center;
+  }
+
+  /* --- сердечки на фоне --- */
+  .heart{
+    position:fixed;
+    bottom:-60px;
+    font-size:24px;
+    color:var(--pink);
+    opacity:.5;
+    pointer-events:none;
+    user-select:none;
+    animation:float linear infinite;
+    z-index:0;
+  }
+  @keyframes float{
+    from{transform:translateY(0) rotate(0deg)}
+    to{transform:translateY(-115vh) rotate(360deg)}
+  }
+
+  .card{
+    position:relative;
+    z-index:2;
+    background:rgba(255,255,255,.82);
+    border:3px solid var(--pink-soft);
+    border-radius:32px;
+    padding:44px 36px;
+    max-width:min(92vw,620px);
+    box-shadow:0 18px 50px rgba(214,51,132,.15);
+  }
+
+  h1{
+    font-size:clamp(26px,5.2vw,46px);
+    line-height:1.25;
+    margin:0 0 34px;
+    color:var(--pink-deep);
+  }
+
+  .buttons{display:flex;gap:18px;justify-content:center;flex-wrap:wrap}
+
+  button{
+    font-family:inherit;
+    font-size:clamp(18px,3.2vw,26px);
+    font-weight:bold;
+    padding:16px 44px;
+    border:none;
+    border-radius:999px;
+    cursor:pointer;
+    color:#fff;
+    background:linear-gradient(135deg,var(--pink),var(--pink-deep));
+    box-shadow:0 8px 20px rgba(214,51,132,.35);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  button:hover{transform:scale(1.06)}
+  button:active{transform:scale(.97)}
+
+  /* кнопка "Нет" уходит в свободный полёт */
+  #no{
+    background:linear-gradient(135deg,#ffb3d1,#ff7fb2);
+    transition:transform .12s ease, left .18s cubic-bezier(.3,1.4,.5,1), top .18s cubic-bezier(.3,1.4,.5,1);
+  }
+  #no.loose{
+    position:fixed;
+    margin:0;
+    z-index:5;
+  }
+
+  #result{
+    display:none;
+    font-size:clamp(24px,4.6vw,42px);
+    line-height:1.3;
+    animation:pop .45s cubic-bezier(.2,1.6,.4,1);
+  }
+  @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+
+  .big-heart{font-size:clamp(44px,9vw,80px);display:block;margin-top:18px;animation:beat 1s ease-in-out infinite}
+  @keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div id="question-block">
+    <h1 id="question"></h1>
+    <div class="buttons">
+      <button id="yes">Да</button>
+      <button id="no">Нет</button>
+    </div>
+  </div>
+
+  <div id="result">
+    <span id="answer-text"></span>
+    <span class="big-heart">💖</span>
+  </div>
+</div>
+
+<script>
+/* ====== ТЕКСТЫ — меняй здесь ====== */
+const QUESTION = "Варя, признай: я самый лучший?";
+const ANSWER   = "я так рад что ты это признала";
+/* ================================== */
+
+document.getElementById("question").textContent = QUESTION;
+document.getElementById("answer-text").textContent = ANSWER;
+
+/* --- фоновые сердечки --- */
+const HEARTS = ["💗","💖","💕","💘","🩷","❤️"];
+for (let i = 0; i < 26; i++) {
+  const h = document.createElement("div");
+  h.className = "heart";
+  h.textContent = HEARTS[Math.floor(Math.random() * HEARTS.length)];
+  h.style.left = Math.random() * 100 + "vw";
+  h.style.fontSize = (16 + Math.random() * 30) + "px";
+  h.style.animationDuration = (7 + Math.random() * 9) + "s";
+  h.style.animationDelay = (-Math.random() * 14) + "s";
+  h.style.opacity = 0.25 + Math.random() * 0.45;
+  document.body.appendChild(h);
+}
+
+/* --- убегающая кнопка "Нет" --- */
+const no = document.getElementById("no");
+const SAFE = 26;          // отступ от краёв
+const PANIC = 130;        // на каком расстоянии курсора кнопка срывается с места
+
+function detach() {
+  if (no.classList.contains("loose")) return;
+  const r = no.getBoundingClientRect();
+  no.classList.add("loose");
+  no.style.width = r.width + "px";
+  no.style.height = r.height + "px";
+  no.style.left = r.left + "px";
+  no.style.top = r.top + "px";
+}
+
+function jump() {
+  detach();
+  const w = no.offsetWidth, h = no.offsetHeight;
+  const maxX = Math.max(SAFE, window.innerWidth  - w - SAFE);
+  const maxY = Math.max(SAFE, window.innerHeight - h - SAFE);
+  const cur = no.getBoundingClientRect();
+
+  let x, y, tries = 0;
+  do {
+    x = SAFE + Math.random() * (maxX - SAFE);
+    y = SAFE + Math.random() * (maxY - SAFE);
+    tries++;
+  } while (tries < 30 && Math.hypot(x - cur.left, y - cur.top) < Math.min(220, window.innerWidth / 2));
+
+  no.style.left = x + "px";
+  no.style.top  = y + "px";
+}
+
+/* мышь: убегает, как только курсор подбирается близко */
+document.addEventListener("mousemove", e => {
+  const r = no.getBoundingClientRect();
+  const dx = Math.max(r.left - e.clientX, 0, e.clientX - r.right);
+  const dy = Math.max(r.top - e.clientY, 0, e.clientY - r.bottom);
+  if (Math.hypot(dx, dy) < PANIC) jump();
+});
+
+/* на всякий случай — прямые попытки нажать */
+["mouseenter","mouseover","mousedown","focus"].forEach(ev =>
+  no.addEventListener(ev, e => { e.preventDefault(); jump(); })
+);
+
+/* тач-устройства: палец не успевает — прыгаем до срабатывания клика */
+["touchstart","pointerdown"].forEach(ev =>
+  no.addEventListener(ev, e => { e.preventDefault(); jump(); }, {passive:false})
+);
+
+no.addEventListener("click", e => { e.preventDefault(); jump(); });
+
+/* клавиатура тоже не поможет */
+no.addEventListener("keydown", e => { e.preventDefault(); jump(); });
+no.setAttribute("tabindex", "-1");
+
+/* не даём кнопке остаться за краем после поворота/ресайза */
+window.addEventListener("resize", () => {
+  if (!no.classList.contains("loose")) return;
+  const maxX = window.innerWidth  - no.offsetWidth  - SAFE;
+  const maxY = window.innerHeight - no.offsetHeight - SAFE;
+  no.style.left = Math.min(parseFloat(no.style.left), Math.max(SAFE, maxX)) + "px";
+  no.style.top  = Math.min(parseFloat(no.style.top),  Math.max(SAFE, maxY)) + "px";
+});
+
+/* --- "Да" --- */
+document.getElementById("yes").addEventListener("click", () => {
+  document.getElementById("question-block").style.display = "none";
+  no.style.display = "none";
+  document.getElementById("result").style.display = "block";
+
+  // салют из сердечек
+  for (let i = 0; i < 40; i++) {
+    const h = document.createElement("div");
+    h.className = "heart";
+    h.textContent = HEARTS[Math.floor(Math.random() * HEARTS.length)];
+    h.style.left = Math.random() * 100 + "vw";
+    h.style.fontSize = (22 + Math.random() * 34) + "px";
+    h.style.animationDuration = (4 + Math.random() * 5) + "s";
+    h.style.opacity = 0.5 + Math.random() * 0.5;
+    document.body.appendChild(h);
+  }
+});
+</script>
+</body>
+</html>
