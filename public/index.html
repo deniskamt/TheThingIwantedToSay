@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Один вопрос</title>
+<title>/*__PAGE_TITLE__*/</title>
 <style>
   :root{
     --pink:#ff5fa2;
@@ -107,8 +107,8 @@
   <div id="question-block">
     <h1 id="question"></h1>
     <div class="buttons">
-      <button id="yes">Да</button>
-      <button id="no">Нет</button>
+      <button id="yes"></button>
+      <button id="no"></button>
     </div>
   </div>
 
@@ -118,14 +118,15 @@
   </div>
 </div>
 
+<script>window.__APP_CONFIG__ = /*__APP_CONFIG__*/{};</script>
 <script>
-/* ====== ТЕКСТЫ — меняй здесь ====== */
-const QUESTION = "Варя, признай: я самый лучший?";
-const ANSWER   = "я так рад что ты это признала";
-/* ================================== */
+/* Тексты приходят с сервера из переменных окружения Railway. */
+const CFG = window.__APP_CONFIG__ || {};
 
-document.getElementById("question").textContent = QUESTION;
-document.getElementById("answer-text").textContent = ANSWER;
+document.getElementById("question").textContent    = CFG.question;
+document.getElementById("answer-text").textContent = CFG.answer;
+document.getElementById("yes").textContent         = CFG.yesLabel;
+document.getElementById("no").textContent          = CFG.noLabel;
 
 /* --- фоновые сердечки --- */
 const HEARTS = ["💗","💖","💕","💘","🩷","❤️"];

@@ -1,0 +1,13 @@
+{
+  "name": "one-question",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pink heart-themed yes/no page with a runaway No button",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
